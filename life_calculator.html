@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人生生存試算器 </title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* 深色模式變數 (預設) */
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --secondary: #3b82f6;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --danger: #ef4444;
+      --accent: #f59e0b;
+      --purple: #a855f7;
+      --twstock: #60a5fa;
+      --stock-up: #f87171;
+      --stock-down: #4ade80;
+      --sub-bg: rgba(15, 23, 42, 0.5);
+      --kpi-bg: #0f172a;
+      --badge-bg: #0f172a;
+      --badge-text: #f1f5f9;
+      --table-head: #0f172a;
+      --input-bg: #0f172a;
+      --input-text: #f1f5f9;
+    }
+
+    /* 淺色模式變數 */
+    [data-theme="light"] {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --secondary: #3b82f6;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --accent: #f59e0b;
+      --purple: #8b5cf6;
+      --twstock: #2563eb;
+      --stock-up: #dc2626;
+      --stock-down: #16a34a;
+      --sub-bg: #fafafa;
+      --kpi-bg: #f1f5f9;
+      --badge-bg: #f8fafc;
+      --badge-text: #1e293b;
+      --table-head: #f8fafc;
+      --input-bg: #ffffff;
+      --input-text: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container { max-width: 1520px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 20px; }
+    header h1 { font-size: 1.85rem; font-weight: 800; margin-bottom: 6px; }
+    header p { color: var(--text-muted); font-size: 0.95rem; }
+
+    .radar-master-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .radar-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .radar-title-group { display: flex; flex-direction: column; gap: 4px; }
+    .radar-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
+    .total-networth-banner {
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid var(--secondary);
+      color: var(--secondary);
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .radar-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .btn-theme-toggle {
+      background: var(--border);
+      color: var(--text);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .btn-theme-toggle:hover { opacity: 0.85; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    @media (min-width: 1160px) { .grid { grid-template-columns: 620px 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 22px;
+      border: 1.5px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin: 16px 0 8px 0;
+      padding-left: 6px;
+      border-left: 3px solid var(--secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group { margin-bottom: 8px; }
+
+    label { display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 3px; color: var(--text-muted); }
+
+    input, select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background: var(--input-bg);
+      color: var(--input-text);
+    }
+    input:focus, select:focus { border-color: var(--primary); }
+
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .input-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+    .stage-box { background: var(--bg); border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+    .housing-box { background: rgba(59, 130, 246, 0.05); border: 1.5px dashed var(--secondary); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .spouse-box { background: rgba(139, 92, 246, 0.05); border: 1.5px dashed var(--purple); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .child-box { background: rgba(16, 185, 129, 0.05); border: 1.5px dashed var(--primary); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+
+    .stage-label { font-size: 0.76rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+
+    .tip-box {
+      background: var(--input-bg);
+      border-left: 4px solid var(--secondary);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      color: var(--input-text);
+      margin-top: 6px;
+      border-radius: 4px;
+      line-height: 1.4;
+      border: 1px solid var(--border);
+    }
+
+    .tip-box.summary-badge {
+      background: var(--input-bg);
+      border-left-color: var(--twstock);
+      color: var(--input-text);
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-top: 4px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+    }
+
+    .dynamic-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .dynamic-item-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--input-bg);
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .btn-del-item {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+    .btn-del-item:hover { background: var(--danger); color: #ffffff; }
+
+    .btn-add-item {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--secondary);
+      border: 1.5px dashed var(--secondary);
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .btn-add-item:hover { background: var(--secondary); color: #ffffff; }
+
+    .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (min-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+
+    .kpi-card {
+      background: var(--kpi-bg);
+      padding: 16px;
+      border-radius: 12px;
+      border-left: 5px solid var(--primary);
+      border: 1px solid var(--border);
+    }
+    .kpi-title { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+    .kpi-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+
+    .table-container { overflow-x: auto; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: right; }
+    th, td { padding: 8px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; color: var(--text); }
+    th { background: var(--table-head); color: var(--text-muted); font-weight: 600; }
+    th:first-child, td:first-child { text-align: left; }
+    .sub-row td { color: var(--text-muted); font-size: 0.76rem; background: var(--sub-bg); }
+
+    .chart-container { position: relative; height: 330px; width: 100%; }
+
+    footer { text-align: center; padding: 24px 0 16px; color: var(--text-muted); font-size: 0.82rem; border-top: 1px solid var(--border); margin-top: 24px; }
+  </style>
+</head>
+<body data-theme="dark">
+
+<div class="container">
+  <header>
+    <h1>人生生存試算器 </h1>
+    <p>全資產長期複利規劃、勞保勞退自動試算、配息領取模式與退休模型</p>
+  </header>
+
+  <!-- 頂部精簡總覽大看板 -->
+  <div class="radar-master-card">
+    <div class="radar-toolbar" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+      <div class="radar-title-group" style="width:100%; align-items:center; text-align:center;">
+        <div class="radar-title">
+          <span>📊 總資產與核心財務看板</span>
+        </div>
+        <div class="total-networth-banner" id="globalNetWorthBanner">
+          🏆 目前預估總身家：NT$ 0 元 ｜ 存款：NT$ 0 元 ｜ 台股ETF總市值：NT$ 0 元
+        </div>
+      </div>
+      <div class="radar-controls" style="width:100%; justify-content:center; margin-top:10px;">
+        <button class="btn-theme-toggle" onclick="toggleTheme()" id="themeToggleBtn">☀️ 切換淺色</button>
+        <span id="saveStatusBadge" style="font-size:0.78rem; color:var(--primary); font-weight:700; opacity:0; transition:opacity 0.3s;">💾 已自動儲存</span>
+        <button onclick="resetFormData()" style="background:var(--border); color:var(--text); border:none; padding:5px 10px; border-radius:6px; font-size:0.75rem; cursor:pointer; font-weight:600;">↺ 恢復預設值</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左側設定面板 -->
+    <div class="card">
+      <div class="card-title"><span>⚙️ 核心人生階段設定</span></div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>工作起算年齡</label>
+          <select id="startAge" onchange="updateStageVisibility()">
+            <option value="22">22 歲開始規劃</option>
+            <option value="25" selected>25 歲開始規劃</option>
+            <option value="30">30 歲開始規劃</option>
+            <option value="32">32 歲開始規劃</option>
+            <option value="35">35 歲開始規劃</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>預計退休年齡</label>
+          <select id="retireAge" onchange="updateStageVisibility()">
+            <option value="45">45 歲提早退休 (FIRE)</option>
+            <option value="50">50 歲提早退休</option>
+            <option value="55">55 歲提早退休</option>
+            <option value="60">60 歲退休</option>
+            <option value="65" selected>65 歲退休 (法定)</option>
+            <option value="70">70 歲退休</option>
+            <option value="75">75 歲退休</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 薪資模式 -->
+      <div class="section-subtitle">💵 收入與薪資模式</div>
+      <div class="input-row">
+        <div class="form-group">
+          <label>薪水模式</label>
+          <select id="salaryMode" onchange="handleSalaryModeChange()">
+            <option value="single" selected>單身 / 單薪模式</option>
+            <option value="double">雙薪 / 伴侶模式</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>我的起始月底薪 (NT$)</label>
+          <input type="number" id="baseSalarySelf" value="35000" step="1000" oninput="calculate()">
+        </div>
+      </div>
+
+      <div id="spouseSalaryBox" class="spouse-box" style="display:none;">
+        <div class="input-row">
+          <div class="form-group">
+            <label>另一半起始月薪 (NT$)</label>
+            <input type="number" id="baseSalarySpouse" value="45000" step="1000" oninput="calculate()">
+          </div>
+          <div class="form-group">
+            <label>預計幾歲結婚合併雙薪？</label>
+            <select id="marryAge" onchange="calculate()">
+              <option value="25">25 歲結婚</option>
+              <option value="28">28 歲結婚</option>
+              <option value="30">30 歲結婚</option>
+              <option value="32">32 歲結婚</option>
+              <option value="35" selected>35 歲結婚</option>
+              <option value="38">38 歲結婚</option>
+              <option value="40">40 歲結婚</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="stage-label" style="color:var(--purple); margin-top:8px;">🎁 另一半結婚當下各項獎金 (年漲2%複利)</div>
+        <div class="input-row-3">
+          <div class="form-group"><label>每月常態獎金</label><input type="number" id="mBonus_Spouse" value="5000" step="1000" oninput="calculate()"></div>
+          <div class="form-group"><label>年終獎金(手動)</label><input type="number" id="yBonus_Spouse" value="45000" step="1000" oninput="calculate()"></div>
+          <div class="form-group"><label>三節獎金(年)</label><input type="number" id="fBonus_Spouse" value="6000" step="1000" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <!-- 個人階段獎金 -->
+      <div class="section-subtitle">🎁 各階段個人獎金 (本薪年漲2%複利)</div>
+      
+      <div class="stage-box" id="box_stage_32" style="display:block;">
+        <div class="stage-label" id="lbl_stage_first">📍 第 1 階段：工作初期獎金</div>
+        <div class="input-row-3">
+          <div class="form-group"><label>每月常態獎金</label><input type="number" id="mBonus_32" value="5000" oninput="calculate()"></div>
+          <div class="form-group"><label>年終獎金(手動)</label><input type="number" id="yBonus_32" value="35000" oninput="calculate()"></div>
+          <div class="form-group"><label>三節獎金(年)</label><input type="number" id="fBonus_32" value="6000" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <div class="stage-box" id="box_stage_35">
+        <div class="stage-label">📍 第 2 階段：中年穩健期獎金</div>
+        <div class="input-row-3">
+          <div class="form-group"><label>每月常態獎金</label><input type="number" id="mBonus_35" value="5000" oninput="calculate()"></div>
+          <div class="form-group"><label>年終月數</label><select id="yBonusMonth_35" onchange="calculate()"><option value="0.5">0.5 個月</option><option value="1" selected>1 個月</option><option value="1.5">1.5 個月</option><option value="2">2 個月</option></select></div>
+          <div class="form-group"><label>三節獎金(年)</label><input type="number" id="fBonus_35" value="6000" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <div class="stage-box" id="box_stage_45">
+        <div class="stage-label">📍 第 3 階段：資深衝刺期獎金</div>
+        <div class="input-row-3">
+          <div class="form-group"><label>每月常態獎金</label><input type="number" id="mBonus_45" value="5000" oninput="calculate()"></div>
+          <div class="form-group"><label>年終月數</label><select id="yBonusMonth_45" onchange="calculate()"><option value="0.5">0.5 個月</option><option value="1" selected>1 個月</option><option value="1.5">1.5 個月</option><option value="2">2 個月</option></select></div>
+          <div class="form-group"><label>三節獎金(年)</label><input type="number" id="fBonus_45" value="6000" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <div class="stage-box" id="box_stage_55">
+        <div class="stage-label">📍 第 4 階段：屆退樂活期獎金</div>
+        <div class="input-row-3">
+          <div class="form-group"><label>每月常態獎金</label><input type="number" id="mBonus_55" value="0" oninput="calculate()"></div>
+          <div class="form-group"><label>年終月數</label><select id="yBonusMonth_55" onchange="calculate()"><option value="0.5">0.5 個月</option><option value="1" selected>1 個月</option><option value="2">2 個月</option></select></div>
+          <div class="form-group"><label>三節獎金(年)</label><input type="number" id="fBonus_55" value="6000" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <!-- 👶 小孩生養與五大教育階段支出專區 -->
+      <div class="section-subtitle" style="color:var(--primary);">
+        <span>👶 小孩生養與五大教育階段支出設定</span>
+      </div>
+      <div class="child-box">
+        <div class="input-row" style="margin-bottom:8px;">
+          <div class="form-group">
+            <label>規劃幾歲生小孩？</label>
+            <select id="childBirthAge" onchange="toggleChildSection(this.value); calculate();">
+              <option value="0" selected>無生育規劃 (0元)</option>
+              <option value="26">26 歲生小孩</option>
+              <option value="28">28 歲生小孩</option>
+              <option value="30">30 歲生小孩</option>
+              <option value="32">32 歲生小孩</option>
+              <option value="35">35 歲生小孩</option>
+              <option value="38">38 歲生小孩</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>0～2歲女性產假/育嬰留停薪資</label>
+            <select id="maternityLeaveMode" onchange="calculate()">
+              <option value="full">正常上班 (100%全薪)</option>
+              <option value="half" selected>產假/育嬰津貼 (半薪 50%)</option>
+              <option value="zero">全職育嬰留停 (無薪 0%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="childDetailsContainer" style="display:none;">
+          <div class="stage-label" style="color:var(--primary);">🍼 階段一：0～3 歲嬰幼兒期 (每月支出)</div>
+          <div class="input-row-4">
+            <div class="form-group"><label>奶粉伙食</label><input type="number" id="c1_milk" value="4000" oninput="calculate()"></div>
+            <div class="form-group"><label>尿布耗材</label><input type="number" id="c1_diaper" value="2000" oninput="calculate()"></div>
+            <div class="form-group"><label>托育保母</label><input type="number" id="c1_nanny" value="15000" oninput="calculate()"></div>
+            <div class="form-group"><label>幼兒保險</label><input type="number" id="c1_insurance" value="2500" oninput="calculate()"></div>
+          </div>
+
+          <div class="stage-label" style="color:var(--primary); margin-top:8px;">🎨 階段二：3～6 歲幼兒園期 (每月支出)</div>
+          <div class="input-row-3">
+            <div class="form-group"><label>學費</label><input type="number" id="c2_tuition" value="8000" oninput="calculate()"></div>
+            <div class="form-group"><label>才藝啟蒙</label><input type="number" id="c2_talent" value="3000" oninput="calculate()"></div>
+            <div class="form-group"><label>飲食衣物</label><input type="number" id="c2_life" value="4000" oninput="calculate()"></div>
+          </div>
+
+          <div class="stage-label" style="color:var(--primary); margin-top:8px;">🎒 階段三：6～12 歲國小期 (每月支出)</div>
+          <div class="input-row-4">
+            <div class="form-group"><label>學校雜費</label><input type="number" id="c3_school" value="2000" oninput="calculate()"></div>
+            <div class="form-group"><label>課後安親</label><input type="number" id="c3_after" value="7000" oninput="calculate()"></div>
+            <div class="form-group"><label>才藝補習</label><input type="number" id="c3_cram" value="3000" oninput="calculate()"></div>
+            <div class="form-group"><label>零用錢</label><input type="number" id="c3_pocket" value="800" oninput="calculate()"></div>
+          </div>
+
+          <div class="stage-label" style="color:var(--primary); margin-top:8px;">📖 階段四：12～18 歲國高中期 (每月支出)</div>
+          <div class="input-row-3">
+            <div class="form-group"><label>學費雜支</label><input type="number" id="c4_school" value="3000" oninput="calculate()"></div>
+            <div class="form-group"><label>升學補習</label><input type="number" id="c4_cram" value="10000" oninput="calculate()"></div>
+            <div class="form-group"><label>零用錢</label><input type="number" id="c4_pocket" value="2500" oninput="calculate()"></div>
+          </div>
+
+          <div class="stage-label" style="color:var(--primary); margin-top:8px;">🎓 階段五：18～22 歲大學期 (每月支出)</div>
+          <div class="input-row-3">
+            <div class="form-group"><label>學雜費</label><input type="number" id="c5_tuition" value="5000" oninput="calculate()"></div>
+            <div class="form-group"><label>住宿租金</label><input type="number" id="c5_rent" value="6000" oninput="calculate()"></div>
+            <div class="form-group"><label>生活伙食</label><input type="number" id="c5_life" value="9000" oninput="calculate()"></div>
+          </div>
+        </div>
+
+        <div class="tip-box summary-badge" id="badge_child_total" style="margin-top:8px;">育兒總開銷試算中...</div>
+      </div>
+
+      <!-- 居住規劃與房貸方案設定 -->
+      <div class="section-subtitle">🏠 居住規劃與房貸方案設定</div>
+      <div class="housing-box">
+        <div class="form-group">
+          <label>居住策略</label>
+          <select id="housingStrategy" onchange="calculate()">
+            <option value="rent">全程租屋 (未買房前依上方房租扣繳)</option>
+            <option value="buy" selected>規劃買房置產</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label>未買房前每月房租 (NT$)</label>
+            <input type="number" id="monthlyRentInput" value="12000" step="100" oninput="calculate()">
+          </div>
+          <div class="form-group"><label>預計買房年齡</label><input type="number" id="buyAge" value="38" oninput="calculate()"></div>
+        </div>
+
+        <div class="input-row-3" style="margin-top:8px;">
+          <div class="form-group">
+            <label>適用房貸方案</label>
+            <select id="mortgagePlan" onchange="toggleMortgagePlanInputs(); calculate();">
+              <option value="general" selected>一般首購 / 商業房貸</option>
+              <option value="nshapo">符合新青安方案</option>
+            </select>
+          </div>
+          <div class="form-group" id="groupRateNormal">
+            <label>房貸年利率 (%)</label>
+            <input type="number" id="mortgageRate" value="2.15" step="0.05" oninput="calculate()">
+          </div>
+          <div class="form-group" id="groupRateNshapo1" style="display:none;">
+            <label>前5年優惠率(%)</label>
+            <input type="number" id="nshapoRate1" value="1.775" step="0.005" oninput="calculate()">
+          </div>
+          <div class="form-group" id="groupRateNshapo2" style="display:none;">
+            <label>第6年起利率(%)</label>
+            <input type="number" id="nshapoRate2" value="2.15" step="0.05" oninput="calculate()">
+          </div>
+          <div class="form-group">
+            <label>貸款年限</label>
+            <select id="mortgageYears" onchange="calculate()">
+              <option value="20">20 年期</option>
+              <option value="30" selected>30 年期</option>
+              <option value="35">35 年期</option>
+              <option value="40">40 年期</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-row-3" style="margin-top:8px;">
+          <div class="form-group"><label>房屋總價 (萬元)</label><input type="number" id="housePriceWan" value="1500" oninput="calculate()"></div>
+          <div class="form-group"><label>貸款成數 (%)</label><input type="number" id="loanRatio" value="80" oninput="calculate()"></div>
+          <div class="form-group"><label>長輩贊助款 (元)</label><input type="number" id="parentsHelp" value="1000000" oninput="calculate()"></div>
+        </div>
+        <div class="tip-box" id="downPaymentTip">分析計算中...</div>
+      </div>
+
+      <!-- 每月基礎生活支出細項 -->
+      <div class="section-subtitle">
+        <span>🛒 每月單身基礎生活支出細項</span>
+        <button class="btn-add-item" onclick="addExpenseItem()">➕ 新增開銷</button>
+      </div>
+      <div class="stage-box">
+        <div class="dynamic-list" id="expenseListContainer"></div>
+        <div class="tip-box summary-badge" id="badge_exp_total">每月開銷小計計算中...</div>
+      </div>
+
+      <!-- 選擇雙薪後的結婚家庭開銷設定 -->
+      <div class="section-subtitle" id="marriedExpenseSubtitle" style="color:var(--purple); display:none;">
+        <span>💍 結婚後每月家庭開銷細項</span>
+        <button class="btn-add-item" onclick="addMarriedExpenseItem()">➕ 新增家庭開銷</button>
+      </div>
+      <div class="spouse-box" id="marriedExpenseSection" style="display:none;">
+        <div class="dynamic-list" id="marriedExpenseListContainer"></div>
+        <div class="tip-box summary-badge" id="badge_married_exp_total">結婚後每月家庭開銷小計計算中...</div>
+      </div>
+
+      <!-- 每月台股 ETF 定期定額設定 -->
+      <div class="section-subtitle">
+        <span>📈 每月台股 ETF 定期定額 (每 5 年區間設定)</span>
+        <select id="enableDca" onchange="toggleSection('dcaSection', this.value); calculate();" style="width:110px; padding:3px 6px; font-size:0.75rem; font-weight:700;">
+          <option value="enabled" selected>🟢 啟用投資</option>
+          <option value="disabled">🔴 暫停關閉</option>
+        </select>
+      </div>
+      <div class="stage-box" id="dcaSection">
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">
+          💡 依據您規劃的起始年齡與退休年齡，系統自動產生 5 年一期的定期定額投入金額設定：
+        </div>
+        <div class="dynamic-list" id="dcaIntervalContainer"></div>
+        
+        <!-- 配息領取模式設定 -->
+        <div class="form-group" style="margin-top:12px; border-top:1px dashed var(--border); padding-top:10px;">
+          <label style="color:var(--primary); font-weight:700;">💰 台股 ETF 配息領取策略</label>
+          <select id="dividendStrategy" onchange="calculate()">
+            <option value="now">馬上領配息 (不滾入複利，直接計入每月現金收入)</option>
+            <option value="5">5年後再領配息 (前5年滾入複利 reinvest)</option>
+            <option value="10">10年後再領配息 (前10年滾入複利 reinvest)</option>
+            <option value="15">15年後再領配息 (前15年滾入複利 reinvest)</option>
+            <option value="20">20年後再領配息 (前20年滾入複利 reinvest)</option>
+            <option value="retire" selected>退休後再領配息 (工作期間全數滾入複利 reinvest)</option>
+          </select>
+        </div>
+
+        <div class="tip-box summary-badge" id="badge_dca_total" style="margin-top:8px;">定期定額試算中...</div>
+      </div>
+
+      <!-- 超額存款自動加碼投資設定 -->
+      <div class="section-subtitle" style="color:var(--primary);">
+        <span>⚡ 超額存款自動加碼投資設定</span>
+        <select id="enableExtraInvest" onchange="toggleSection('extraSection', this.value); calculate();" style="width:110px; padding:3px 6px; font-size:0.75rem; font-weight:700;">
+          <option value="enabled" selected>🟢 啟用加碼</option>
+          <option value="disabled">🔴 暫停關閉</option>
+        </select>
+      </div>
+      <div class="stage-box" id="extraSection" style="padding:10px;">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>台幣活存超過多少金額時啟動加碼 (NT$)</label>
+          <input type="number" id="extraInvestThreshold" value="1000000" step="50000" oninput="calculate()">
+        </div>
+        <div class="stage-label" style="font-weight:700; margin-bottom:6px;">達標後各標的每月額外加碼金額 (NT$)：預設皆為 0 元</div>
+        <div class="input-row">
+          <div class="form-group"><label>0050 加碼金額</label><input type="number" id="extra_0050" value="0" step="500" oninput="calculate()"></div>
+          <div class="form-group"><label>00919 加碼金額</label><input type="number" id="extra_00919" value="0" step="500" oninput="calculate()"></div>
+        </div>
+      </div>
+
+      <!-- 目前台股庫存持有現狀 -->
+      <div class="section-subtitle">
+        <span>📊 目前台股庫存持有股數現狀</span>
+        <select id="enableStock" onchange="toggleSection('stockSection', this.value); calculate();" style="width:110px; padding:3px 6px; font-size:0.75rem; font-weight:700;">
+          <option value="enabled" selected>🟢 啟用持有</option>
+          <option value="disabled">🔴 暫停關閉</option>
+        </select>
+      </div>
+      <div class="stage-box" id="stockSection">
+        <div class="dynamic-list" id="stockListContainer"></div>
+        <div class="tip-box summary-badge" id="badge_stock_total">台股市值加總計算中...</div>
+      </div>
+
+      <!-- 銀行帳戶明細 -->
+      <div class="section-subtitle">
+        <span>🏦 銀行帳戶與現金資產明細 (可新增項目)</span>
+        <button class="btn-add-item" onclick="addSavingItem()">➕ 新增項目</button>
+      </div>
+      <div class="stage-box">
+        <div class="dynamic-list" id="savingListContainer"></div>
+        <div class="tip-box summary-badge" id="badge_savings_total">目前淨現金總額計算中...</div>
+      </div>
+
+      <!-- 🏛 勞保+勞退自動試算參數設定 -->
+      <div class="section-subtitle" style="color:var(--primary);">
+        <span>🏛️ 勞保年金與勞退新制自動試算參數</span>
+      </div>
+      <div class="stage-box" style="padding:10px;">
+        <div class="input-row">
+          <div class="form-group">
+            <label>本人勞保總投保年資 (年)</label>
+            <input type="number" id="laborYearsSelf" value="20" step="1" oninput="calculate()">
+          </div>
+          <div class="form-group" id="spouseLaborYearsGroup" style="display:none;">
+            <label style="color:var(--purple);">另一半勞保總投保年資 (年)</label>
+            <input type="number" id="laborYearsSpouse" value="20" step="1" oninput="calculate()">
+          </div>
+        </div>
+        <div class="input-row" style="margin-top:6px;">
+          <div class="form-group">
+            <label>本人勞退提撥總年數 (年)</label>
+            <input type="number" id="pensionYearsSelf" value="20" step="1" oninput="calculate()">
+          </div>
+          <div class="form-group" id="spousePensionYearsGroup" style="display:none;">
+            <label style="color:var(--purple);">另一半勞退提撥總年數 (年)</label>
+            <input type="number" id="pensionYearsSpouse" value="20" step="1" oninput="calculate()">
+          </div>
+        </div>
+        <div class="tip-box" style="margin-top:6px; font-size:0.75rem;">
+          💡 系統將自動依據您與另一半的薪資與真實年資，結合**勞保年金**與**勞退專戶（4.5%複利滾存分期領）**，在退休後完整計入明細表！
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側看板面板 -->
+    <div>
+      <div class="card">
+        <div class="card-title">📊 60年人生財務推算結果</div>
+        <div class="kpi-grid">
+          <div class="kpi-card" id="retireCard">
+            <div class="kpi-title">退休首年每月結餘</div>
+            <div class="kpi-value" id="kpiSurplus">+ NT$ 0</div>
+            <div class="kpi-desc" id="kpiDesc">計算中...</div>
+          </div>
+          <div class="kpi-card" id="netWorthCard">
+            <div class="kpi-title">最終資產淨值 (85歲身家)</div>
+            <div class="kpi-value" id="kpiNetWorth">0 萬</div>
+            <div class="kpi-desc" id="kpiStockRatio">計算中...</div>
+          </div>
+        </div>
+
+        <div class="card-title">📈 關鍵十年節點財務明細表</div>
+        <div class="table-container">
+          <table>
+            <thead><tr id="tableHeaderRow"><th>項目</th></tr></thead>
+            <tbody id="resultTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="chart-container"><canvas id="assetChart"></canvas></div>
+      </div>
+
+      <!-- 效益比較表 -->
+      <div class="card">
+        <div class="card-title">⚖️ 「積極投資方案」與「純放現金」效益比較表</div>
+        <div class="table-container">
+          <table>
+            <thead><tr id="compareHeaderRow"><th>情境方案</th></tr></thead>
+            <tbody id="compareTableBody"></tbody>
+          </table>
+        </div>
+        <div class="tip-box" id="compareSummaryTip" style="border-left-color: var(--accent);">分析生成中...</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2026 人生生存試算器 All Rights Reserved. 開放式台股ETF長期複利與退休規劃模型。</p>
+  </footer>
+</div>
+
+<script>
+  let chartInstance = null;
+
+  const stockNameMap = {
+    '0050': '元大台灣50',
+    '00919': '群益精選高息'
+  };
+
+  function toggleTheme() {
+    const body = document.body;
+    const btn = document.getElementById('themeToggleBtn');
+    const currentTheme = body.getAttribute('data-theme');
+    if (currentTheme === 'dark') {
+      body.setAttribute('data-theme', 'light');
+      btn.textContent = '🌙 切換深色';
+      localStorage.setItem('financial_sim_universal_theme', 'light');
+    } else {
+      body.setAttribute('data-theme', 'dark');
+      btn.textContent = '☀️ 切換淺色';
+      localStorage.setItem('financial_sim_universal_theme', 'dark');
+    }
+    calculate();
+  }
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('financial_sim_universal_theme') || 'dark';
+    bodyThemeSet(savedTheme);
+  }
+
+  function bodyThemeSet(theme) {
+    document.body.setAttribute('data-theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️ 切換淺色' : '🌙 切換深色';
+  }
+
+  function toggleSection(sectionId, val) {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.style.display = (val === 'enabled') ? 'block' : 'none';
+    }
+  }
+
+  function toggleChildSection(val) {
+    const container = document.getElementById('childDetailsContainer');
+    if (container) {
+      container.style.display = (val === '0') ? 'none' : 'block';
+    }
+  }
+
+  function toggleMortgagePlanInputs() {
+    const plan = document.getElementById('mortgagePlan')?.value || 'general';
+    const groupRateNormal = document.getElementById('groupRateNormal');
+    const groupRateNshapo1 = document.getElementById('groupRateNshapo1');
+    const groupRateNshapo2 = document.getElementById('groupRateNshapo2');
+
+    if (plan === 'nshapo') {
+      if (groupRateNormal) groupRateNormal.style.display = 'none';
+      if (groupRateNshapo1) groupRateNshapo1.style.display = 'block';
+      if (groupRateNshapo2) groupRateNshapo2.style.display = 'block';
+    } else {
+      if (groupRateNormal) groupRateNormal.style.display = 'block';
+      if (groupRateNshapo1) groupRateNshapo1.style.display = 'none';
+      if (groupRateNshapo2) groupRateNshapo2.style.display = 'none';
+    }
+  }
+
+  function initSectionsVisibility() {
+    const dcaVal = document.getElementById('enableDca')?.value || 'enabled';
+    toggleSection('dcaSection', dcaVal);
+
+    const extraVal = document.getElementById('enableExtraInvest')?.value || 'enabled';
+    toggleSection('extraSection', extraVal);
+
+    const stockVal = document.getElementById('enableStock')?.value || 'enabled';
+    toggleSection('stockSection', stockVal);
+
+    const childAgeVal = document.getElementById('childBirthAge')?.value || '0';
+    toggleChildSection(childAgeVal);
+
+    toggleMortgagePlanInputs();
+    handleSalaryModeChange();
+  }
+
+  let defaultExpenses = [
+    { name: '伙食費', val: 12000 },
+    { name: '水電瓦斯', val: 1500 },
+    { name: '手機與網路', val: 800 },
+    { name: '交通費', val: 2000 },
+    { name: '娛樂社交', val: 3000 },
+    { name: '醫療保險', val: 2500 }
+  ];
+
+  let defaultMarriedExpenses = [
+    { name: '家庭伙食', val: 20000 },
+    { name: '水電管理費', val: 3000 },
+    { name: '通訊與雜支', val: 1500 },
+    { name: '家庭娛樂', val: 5000 },
+    { name: '保險與醫療', val: 5000 }
+  ];
+
+  let dcaIntervals = [
+    { range: '25-29歲', start: 25, end: 29, v0050: 6000, v00919: 3000 },
+    { range: '30-34歲', start: 30, end: 34, v0050: 6000, v00919: 3000 },
+    { range: '35-39歲', start: 35, end: 39, v0050: 6000, v00919: 3000 },
+    { range: '40-44歲', start: 40, end: 44, v0050: 6000, v00919: 3000 },
+    { range: '45-49歲', start: 45, end: 49, v0050: 6000, v00919: 3000 },
+    { range: '50-54歲', start: 50, end: 54, v0050: 6000, v00919: 3000 },
+    { range: '55-59歲', start: 55, end: 59, v0050: 6000, v00919: 3000 },
+    { range: '60-64歲', start: 60, end: 64, v0050: 6000, v00919: 3000 }
+  ];
+
+  function updateDcaIntervals() {
+    const startAge = parseInt(document.getElementById('startAge')?.value || 25, 10);
+    const retireAge = parseInt(document.getElementById('retireAge')?.value || 65, 10);
+    
+    let newIntervals = [];
+    let cur = startAge;
+    while(cur < retireAge) {
+      let nextCur = Math.min(retireAge, cur + 5);
+      let existing = dcaIntervals.find(d => d.start === cur);
+      newIntervals.push({
+        range: `${cur}-${nextCur-1}歲`,
+        start: cur,
+        end: nextCur - 1,
+        v0050: existing ? existing.v0050 : 6000,
+        v00919: existing ? existing.v00919 : 3000
+      });
+      cur = nextCur;
+    }
+    dcaIntervals = newIntervals;
+    renderDcaIntervalsContainer();
+  }
+
+  let defaultStocks = [
+    { id: '0050', name: '元大台灣50', shares: 0, price: 110.0, yield: 3.5, freq: 'quarter', historyDivs: [1.2, 1.1, 1.0, 0.9] },
+    { id: '00919', name: '群益精選高息', shares: 0, price: 30.0, yield: 10.0, freq: 'quarter', historyDivs: [0.72, 0.72, 0.72, 0.72] }
+  ];
+
+  let defaultSavings = [
+    { name: '活存', val: 500000 }
+  ];
+
+  function formatMoney(num) {
+    return Math.round(num || 0).toLocaleString('en-US');
+  }
+
+  function computePMT(rateAnnual, years, loanAmount) {
+    if (rateAnnual === 0 || years === 0) return Math.round(loanAmount / (years * 12 || 1));
+    const r = (rateAnnual / 100) / 12;
+    const n = years * 12;
+    return Math.round(loanAmount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+  }
+
+  function getEstimatedAnnualDividendPerShare(st) {
+    const divs = st.historyDivs || [];
+    if (divs.length === 0) return null;
+    if (st.freq === 'quarter') {
+      const count = Math.min(4, divs.length);
+      const recent = divs.slice(0, count);
+      return (recent.reduce((a,b)=>a+b,0) / count) * 4;
+    } else {
+      return divs[0];
+    }
+  }
+
+  function renderDynamicLists() {
+    updateDcaIntervals();
+    renderStockListToContainer();
+    renderListToContainer('expenseListContainer', defaultExpenses, 'exp');
+    renderListToContainer('marriedExpenseListContainer', defaultMarriedExpenses, 'marriedExp');
+    renderListToContainer('savingListContainer', defaultSavings, 'sav');
+  }
+
+  function renderDcaIntervalsContainer() {
+    const container = document.getElementById('dcaIntervalContainer');
+    if (!container) return;
+    container.innerHTML = dcaIntervals.map((item, idx) => {
+      return `
+        <div class="dynamic-item-row" style="margin-bottom:6px;">
+          <span style="font-size:0.78rem; font-weight:700; min-width:65px; color:var(--primary);">${item.range}</span>
+          <div style="flex:1; display:flex; gap:6px; align-items:center;">
+            <label style="font-size:0.72rem; margin-bottom:0;">0050:</label>
+            <input type="number" value="${item.v0050}" oninput="dcaIntervalChange(${idx}, 'v0050', this.value)" placeholder="0050金額" style="flex:1;">
+          </div>
+          <div style="flex:1; display:flex; gap:6px; align-items:center;">
+            <label style="font-size:0.72rem; margin-bottom:0;">00919:</label>
+            <input type="number" value="${item.v00919}" oninput="dcaIntervalChange(${idx}, 'v00919', this.value)" placeholder="00919金額" style="flex:1;">
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function dcaIntervalChange(idx, field, val) {
+    dcaIntervals[idx][field] = parseFloat(val) || 0;
+    calculate();
+  }
+
+  function renderStockListToContainer() {
+    const container = document.getElementById('stockListContainer');
+    if (!container) return;
+    container.innerHTML = defaultStocks.map((item, idx) => {
+      const cleanId = (item.id || '').trim().toUpperCase();
+      const autoName = stockNameMap[cleanId] || item.name || '';
+      return `
+        <div class="dynamic-item-row">
+          <input type="text" value="${item.id || ''}" readonly style="flex:0.7; background:var(--sub-bg);">
+          <span style="font-size:0.78rem; color:var(--primary); font-weight:700; min-width:90px; text-align:left;">${autoName}</span>
+          <input type="number" value="${item.shares || 0}" oninput="stockChange(${idx}, 'shares', this.value)" placeholder="股數" style="flex:1;" title="持有股數">
+          <input type="number" value="${item.price || 0}" step="0.1" oninput="stockChange(${idx}, 'price', this.value)" placeholder="現價" style="flex:1;" title="目前價格">
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderListToContainer(containerId, dataArray, typeKey) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = dataArray.map((item, idx) => {
+      return `
+        <div class="dynamic-item-row">
+          <input type="text" value="${item.name || ''}" oninput="${typeKey}Change(${idx}, 'name', this.value)" placeholder="項目名稱">
+          <input type="number" value="${item.val || 0}" oninput="${typeKey}Change(${idx}, 'val', this.value)" placeholder="金額">
+          <button class="btn-del-item" onclick="deleteItem('${typeKey}', ${idx})">🗑</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function expChange(idx, field, val) { defaultExpenses[idx][field] = field === 'val' ? (parseFloat(val) || 0) : val; calculate(); }
+  function marriedExpChange(idx, field, val) { defaultMarriedExpenses[idx][field] = field === 'val' ? (parseFloat(val) || 0) : val; calculate(); }
+  function savChange(idx, field, val) { defaultSavings[idx][field] = field === 'val' ? (parseFloat(val) || 0) : val; calculate(); }
+  function stockChange(idx, field, val) { defaultStocks[idx][field] = (field === 'shares' || field === 'price') ? (parseFloat(val) || 0) : val; calculate(); }
+
+  function addExpenseItem() { defaultExpenses.push({ name: '新開銷', val: 1000 }); renderDynamicLists(); calculate(); }
+  function addMarriedExpenseItem() { defaultMarriedExpenses.push({ name: '新家庭開銷', val: 2000 }); renderDynamicLists(); calculate(); }
+  function addSavingItem() { defaultSavings.push({ name: '新帳戶', val: 10000 }); renderDynamicLists(); calculate(); }
+
+  function deleteItem(typeKey, idx) {
+    if (typeKey === 'exp') defaultExpenses.splice(idx, 1);
+    else if (typeKey === 'marriedExp') defaultMarriedExpenses.splice(idx, 1);
+    else if (typeKey === 'sav') defaultSavings.splice(idx, 1);
+    renderDynamicLists();
+    calculate();
+  }
+
+  function handleSalaryModeChange() {
+    const isDouble = (document.getElementById('salaryMode')?.value === 'double');
+    const spouseBox = document.getElementById('spouseSalaryBox');
+    const spouseLaborYearsGroup = document.getElementById('spouseLaborYearsGroup');
+    const spousePensionYearsGroup = document.getElementById('spousePensionYearsGroup');
+    const marriedSub = document.getElementById('marriedExpenseSubtitle');
+    const marriedSec = document.getElementById('marriedExpenseSection');
+
+    if (spouseBox) spouseBox.style.display = isDouble ? 'block' : 'none';
+    if (spouseLaborYearsGroup) spouseLaborYearsGroup.style.display = isDouble ? 'block' : 'none';
+    if (spousePensionYearsGroup) spousePensionYearsGroup.style.display = isDouble ? 'block' : 'none';
+    if (marriedSub) marriedSub.style.display = isDouble ? 'flex' : 'none';
+    if (marriedSec) marriedSec.style.display = isDouble ? 'block' : 'none';
+
+    calculate();
+  }
+
+  function updateStageVisibility() {
+    const startAge = parseInt(document.getElementById('startAge')?.value || 25, 10);
+    const retireAge = parseInt(document.getElementById('retireAge')?.value || 65, 10);
+
+    const b32 = document.getElementById('box_stage_32'); if (b32) b32.style.display = (retireAge > startAge) ? 'block' : 'none';
+    const b35 = document.getElementById('box_stage_35'); if (b35) b35.style.display = (retireAge > startAge + 5) ? 'block' : 'none';
+    const b45 = document.getElementById('box_stage_45'); if (b45) b45.style.display = (retireAge > startAge + 15) ? 'block' : 'none';
+    const b55 = document.getElementById('box_stage_55'); if (b55) b55.style.display = (retireAge > startAge + 25) ? 'block' : 'none';
+
+    const lblFirst = document.getElementById('lbl_stage_first');
+    if (lblFirst) lblFirst.textContent = `📍 第 1 階段：${startAge}～${startAge+4} 歲獎金`;
+
+    updateDcaIntervals();
+    calculate();
+  }
+
+  function calculate() {
+    const startAge = parseInt(document.getElementById('startAge')?.value || 25, 10);
+    const retireAge = parseInt(document.getElementById('retireAge')?.value || 65, 10);
+    const isDoubleMode = (document.getElementById('salaryMode')?.value === 'double');
+
+    const baseSalarySelf = parseFloat(document.getElementById('baseSalarySelf')?.value) || 35000;
+    const baseSalarySpouse = isDoubleMode ? (parseFloat(document.getElementById('baseSalarySpouse')?.value) || 0) : 0;
+    const marryAge = isDoubleMode ? parseInt(document.getElementById('marryAge')?.value || 35, 10) : 999;
+
+    const expLiving = defaultExpenses.reduce((sum, item) => sum + (parseFloat(item.val) || 0), 0);
+    const expMarriedLiving = defaultMarriedExpenses.reduce((sum, item) => sum + (parseFloat(item.val) || 0), 0);
+    
+    const badgeExp = document.getElementById('badge_exp_total');
+    if (badgeExp) badgeExp.textContent = `單身每月開銷小計：NT$ ${formatMoney(expLiving)} 元`;
+
+    const badgeMarriedExp = document.getElementById('badge_married_exp_total');
+    if (badgeMarriedExp) badgeMarriedExp.textContent = `結婚後每月家庭開銷小計：NT$ ${formatMoney(expMarriedLiving)} 元`;
+
+    const stockEnabled = (document.getElementById('enableStock')?.value === 'enabled');
+    let currentStockValue = stockEnabled ? defaultStocks.reduce((sum, st) => sum + Math.round((parseFloat(st.shares) || 0) * (parseFloat(st.price) || 0)), 0) : 0;
+    
+    const badgeStock = document.getElementById('badge_stock_total');
+    if (badgeStock) badgeStock.textContent = stockEnabled ? `台股市值加總：NT$ ${formatMoney(currentStockValue)} 元` : `台股現狀已關閉 (市值計為 0)`;
+
+    const initSavings = defaultSavings.reduce((sum, item) => sum + (parseFloat(item.val) || 0), 0);
+    const badgeSav = document.getElementById('badge_savings_total');
+    if (badgeSav) badgeSav.textContent = `目前淨現金總額：NT$ ${formatMoney(initSavings)} 元`;
+
+    const extraSelectVal = document.getElementById('enableExtraInvest')?.value || 'enabled';
+    const enableExtraInvest = (extraSelectVal === 'enabled');
+    const extraThreshold = parseFloat(document.getElementById('extraInvestThreshold')?.value || 1000000);
+    const e_0050 = enableExtraInvest ? (parseFloat(document.getElementById('extra_0050')?.value) || 0) : 0;
+    const e_00919 = enableExtraInvest ? (parseFloat(document.getElementById('extra_00919')?.value) || 0) : 0;
+
+    // 👶 育兒教養與教育階段開銷計算
+    const childBirthAge = parseInt(document.getElementById('childBirthAge')?.value || 0, 10);
+    const maternityLeaveMode = document.getElementById('maternityLeaveMode')?.value || 'full';
+    
+    const c1_m = (parseFloat(document.getElementById('c1_milk')?.value)||0) + (parseFloat(document.getElementById('c1_diaper')?.value)||0) + (parseFloat(document.getElementById('c1_nanny')?.value)||0) + (parseFloat(document.getElementById('c1_insurance')?.value)||0);
+    const c2_m = (parseFloat(document.getElementById('c2_tuition')?.value)||0) + (parseFloat(document.getElementById('c2_talent')?.value)||0) + (parseFloat(document.getElementById('c2_life')?.value)||0);
+    const c3_m = (parseFloat(document.getElementById('c3_school')?.value)||0) + (parseFloat(document.getElementById('c3_after')?.value)||0) + (parseFloat(document.getElementById('c3_cram')?.value)||0) + (parseFloat(document.getElementById('c3_pocket')?.value)||0);
+    const c4_m = (parseFloat(document.getElementById('c4_school')?.value)||0) + (parseFloat(document.getElementById('c4_cram')?.value)||0) + (parseFloat(document.getElementById('c4_pocket')?.value)||0);
+    const c5_m = (parseFloat(document.getElementById('c5_tuition')?.value)||0) + (parseFloat(document.getElementById('c5_rent')?.value)||0) + (parseFloat(document.getElementById('c5_life')?.value)||0);
+
+    let rawTotalChildCost22Years = 0;
+    if (childBirthAge > 0) {
+      rawTotalChildCost22Years = (c1_m * 36) + (c2_m * 36) + (c3_m * 72) + (c4_m * 72) + (c5_m * 48);
+    }
+    const childInflationTotal = rawTotalChildCost22Years * Math.pow(1.03, 10);
+    const badgeChild = document.getElementById('badge_child_total');
+    if (badgeChild) {
+      badgeChild.innerHTML = childBirthAge > 0 
+        ? `👶 22年育兒總開銷 (${childBirthAge} 歲生小孩)：無通膨 NT$ ${formatMoney(rawTotalChildCost22Years)} 元 ｜ 計入3%通膨約 <strong>NT$ ${(childInflationTotal/10000).toFixed(0)} 萬元</strong>`
+        : `👶 目前設定：無生育規劃 (0元)`;
+    }
+
+    // 🏛️ 勞保年金 + 勞退新制自動計算
+    const laborYearsSelf = parseFloat(document.getElementById('laborYearsSelf')?.value) || 20;
+    const laborYearsSpouse = parseFloat(document.getElementById('laborYearsSpouse')?.value) || 20;
+    const pensionYearsSelf = parseFloat(document.getElementById('pensionYearsSelf')?.value) || 20;
+    const pensionYearsSpouse = parseFloat(document.getElementById('pensionYearsSpouse')?.value) || 20;
+
+    // 1. 本人勞保年金
+    const finalSalarySelf = baseSalarySelf * Math.pow(1.02, retireAge - startAge);
+    const insuredSalarySelf = Math.min(45800, finalSalarySelf);
+    const laborPensionSelf = Math.round(insuredSalarySelf * laborYearsSelf * 0.00775 + 3000);
+
+    // 1b. 另一半勞保年金
+    let laborPensionSpouse = 0;
+    let finalSalarySpouse = 0;
+    let insuredSalarySpouse = 0;
+    if (isDoubleMode) {
+      finalSalarySpouse = baseSalarySpouse * Math.pow(1.02, Math.max(0, retireAge - marryAge));
+      insuredSalarySpouse = Math.min(45800, finalSalarySpouse);
+      laborPensionSpouse = Math.round(insuredSalarySpouse * laborYearsSpouse * 0.00775 + 3000);
+    }
+
+    // 2. 本人勞退新制專戶月領
+    let totalRetireFundSelf = 0;
+    let currSalaryForRetire = baseSalarySelf;
+    for(let i=0; i<pensionYearsSelf; i++) {
+      let annualContribution = (currSalaryForRetire * 12) * 0.06;
+      totalRetireFundSelf = (totalRetireFundSelf + annualContribution) * 1.045;
+      currSalaryForRetire *= 1.02;
+    }
+    const monthlyRetireFundSelf = Math.round(totalRetireFundSelf / 240);
+
+    // 2b. 另一半勞退新制專戶月領
+    let monthlyRetireFundSpouse = 0;
+    if (isDoubleMode) {
+      let totalRetireFundSpouse = 0;
+      let currSalarySpouseForRetire = baseSalarySpouse;
+      for(let i=0; i<pensionYearsSpouse; i++) {
+        let annualContribution = (currSalarySpouseForRetire * 12) * 0.06;
+        totalRetireFundSpouse = (totalRetireFundSpouse + annualContribution) * 1.045;
+        currSalarySpouseForRetire *= 1.02;
+      }
+      monthlyRetireFundSpouse = Math.round(totalRetireFundSpouse / 240);
+    }
+
+    const totalAutoPensionSelf = laborPensionSelf + monthlyRetireFundSelf;
+    const totalAutoPensionSpouse = laborPensionSpouse + monthlyRetireFundSpouse;
+
+    // 🏠 房貸設定 (預設30年)
+    const isBuy = (document.getElementById('housingStrategy')?.value === 'buy');
+    const buyAge = parseInt(document.getElementById('buyAge')?.value || 38, 10);
+    const housePrice = (parseFloat(document.getElementById('housePriceWan')?.value) || 1500) * 10000;
+    const loanRatio = (parseFloat(document.getElementById('loanRatio')?.value || 80)) / 100;
+    const parentsHelp = parseFloat(document.getElementById('parentsHelp')?.value) || 1000000;
+    const monthlyRentInput = parseFloat(document.getElementById('monthlyRentInput')?.value || 12000);
+
+    const mortgagePlan = document.getElementById('mortgagePlan')?.value || 'general';
+    let rate1 = 2.15;
+    let rate2 = 2.15;
+
+    if (mortgagePlan === 'nshapo') {
+      rate1 = parseFloat(document.getElementById('nshapoRate1')?.value || 1.775);
+      rate2 = parseFloat(document.getElementById('nshapoRate2')?.value || 2.15);
+    } else {
+      rate1 = parseFloat(document.getElementById('mortgageRate')?.value || 2.15);
+      rate2 = rate1;
+    }
+
+    const mortgageYears = parseInt(document.getElementById('mortgageYears')?.value || 30, 10);
+    const selfDownNeeded = Math.max(0, (housePrice * (1 - loanRatio) + housePrice * 0.075) - parentsHelp);
+    const loanAmount = housePrice * loanRatio;
+    
+    const normalMortgagePmt1 = computePMT(rate1, mortgageYears, loanAmount);
+    const normalMortgagePmt2 = computePMT(rate2, mortgageYears, loanAmount);
+
+    const endAge = 85;
+    const totalYears = endAge - startAge;
+
+    const baseMilestones = [25, 30, 35, 45, 50, 55, 60, 65, 75, 85];
+    const ageSet = new Set(baseMilestones);
+    ageSet.add(startAge);
+    ageSet.add(retireAge);
+    if (childBirthAge > 0) {
+      ageSet.add(childBirthAge);
+      ageSet.add(childBirthAge + 3);
+      ageSet.add(childBirthAge + 6);
+      ageSet.add(childBirthAge + 12);
+      ageSet.add(childBirthAge + 18);
+      ageSet.add(childBirthAge + 22);
+    }
+    const ageList = Array.from(ageSet).filter(a => a >= startAge && a <= endAge).sort((a, b) => a - b);
+
+    let currentSavings = initSavings;
+    let noInvestSavings = initSavings + currentStockValue;
+
+    const milestoneData = {};
+    const compareMilestone = { investNet: {}, noInvestNet: {} };
+    const annualLabels = [];
+    const annualTotalNet = [];
+    const annualNoInvestNet = [];
+
+    let downPaymentDeducted = false;
+    let noInvestBankruptcyAge = null;
+    let buyWarningMessage = '';
+
+    let simShares0050 = stockEnabled ? (defaultStocks.find(s => s.id === '0050')?.shares || 0) : 0;
+    let simShares00919 = stockEnabled ? (defaultStocks.find(s => s.id === '00919')?.shares || 0) : 0;
+
+    let totalMonthlyInvestSummary = 0;
+    const divStrategy = document.getElementById('dividendStrategy')?.value || 'retire';
+
+    for (let yr = 0; yr <= totalYears; yr++) {
+      const currentAge = startAge + yr;
+
+      let curInterval = dcaIntervals.find(d => currentAge >= d.start && currentAge <= d.end);
+      let dca0050Val = (currentAge < retireAge && curInterval) ? curInterval.v0050 : 0;
+      let dca00919Val = (currentAge < retireAge && curInterval) ? curInterval.v00919 : 0;
+      let etfInvestMonthly = dca0050Val + dca00919Val;
+
+      if (yr === 0) totalMonthlyInvestSummary = etfInvestMonthly;
+
+      let extraBonusInvest = 0;
+      let sa0050 = 0, sa919 = 0;
+      if (enableExtraInvest && currentSavings > extraThreshold) {
+        sa0050 = e_0050; sa919 = e_00919;
+        extraBonusInvest = sa0050 + sa919;
+      }
+
+      const price0050 = defaultStocks.find(s=>s.id==='0050').price * Math.pow(1.06, yr);
+      const price00919 = defaultStocks.find(s=>s.id==='00919').price * Math.pow(1.03, yr);
+
+      const divPS_0050 = getEstimatedAnnualDividendPerShare(defaultStocks.find(s=>s.id==='0050')) || (110.0 * 0.035);
+      const divPS_00919 = getEstimatedAnnualDividendPerShare(defaultStocks.find(s=>s.id==='00919')) || (30.0 * 0.10);
+
+      const totalAnnualDiv = stockEnabled ? ((simShares0050 * divPS_0050) + (simShares00919 * divPS_00919)) : 0;
+
+      let isTimeToTakeDividend = false;
+      if (divStrategy === 'now') {
+        isTimeToTakeDividend = true;
+      } else if (divStrategy === 'retire') {
+        isTimeToTakeDividend = (currentAge >= retireAge);
+      } else {
+        const yearsLimit = parseInt(divStrategy, 10);
+        isTimeToTakeDividend = (yr >= yearsLimit);
+      }
+
+      let monthlyDiv = 0;
+      if (stockEnabled) {
+        if (isTimeToTakeDividend) {
+          monthlyDiv = Math.round(totalAnnualDiv / 12);
+          const activeDca0050 = dca0050Val + sa0050;
+          const activeDca00919 = dca00919Val + sa919;
+          simShares0050 += activeDca0050 * 12 / price0050;
+          simShares00919 += activeDca00919 * 12 / price00919;
+        } else {
+          monthlyDiv = 0;
+          const reinvestSharesValue = totalAnnualDiv;
+          const activeDca0050 = dca0050Val + sa0050;
+          const activeDca00919 = dca00919Val + sa919;
+          
+          simShares0050 += (activeDca0050 * 12 + reinvestSharesValue * 0.5) / price0050;
+          simShares00919 += (activeDca00919 * 12 + reinvestSharesValue * 0.5) / price00919;
+        }
+      }
+
+      currentStockValue = stockEnabled ? Math.round((simShares0050 * price0050) + (simShares00919 * price00919)) : 0;
+
+      if (isBuy && currentAge === buyAge && !downPaymentDeducted) {
+        let deficit = selfDownNeeded;
+        if (currentSavings >= deficit) {
+          currentSavings -= deficit;
+          buyWarningMessage = `✅ <strong>買房規劃分析 (${buyAge} 歲買房)：</strong>自備款需 NT$ ${formatMoney(selfDownNeeded)} 元，現金存款充足，<strong>完全未動用台股 ETF！</strong>`;
+        } else {
+          deficit -= currentSavings;
+          currentSavings = 0;
+          if (currentStockValue >= deficit) {
+            currentStockValue -= deficit;
+            const ratio0050 = (simShares0050 * price0050) / (currentStockValue + deficit || 1);
+            const deficit0050 = deficit * ratio0050;
+            const deficit00919 = deficit * (1 - ratio0050);
+            simShares0050 = Math.max(0, simShares0050 - (deficit0050 / price0050));
+            simShares00919 = Math.max(0, simShares00919 - (deficit00919 / price00919));
+            currentStockValue = Math.round((simShares0050 * price0050) + (simShares00919 * price00919));
+            
+            buyWarningMessage = `⚠️ <strong style="color:var(--accent);">現金存款不足！</strong> ${buyAge} 歲買房需自備 NT$ ${formatMoney(selfDownNeeded)} 元。現金不足部分已<strong>自動變現賣出台股 ETF NT$ ${formatMoney(deficit)} 元</strong>來補足自備款！`;
+          } else {
+            const totalLiquid = currentSavings + currentStockValue;
+            currentSavings = 0;
+            simShares0050 = 0;
+            simShares00919 = 0;
+            currentStockValue = 0;
+
+            buyWarningMessage = `🚨 <span style="color:var(--danger); font-weight:800;">【資金不足警報】${buyAge} 歲現金與台股總市值共 NT$ ${formatMoney(totalLiquid)} 元，尚缺 NT$ ${formatMoney(selfDownNeeded - totalLiquid)} 元無法支付自備款！建議延後至資產累積更充裕的年齡再行購買。</span>`;
+          }
+        }
+        downPaymentDeducted = true;
+      }
+
+      let salarySelf = 0;
+      if (currentAge < retireAge) {
+        salarySelf = Math.round(baseSalarySelf * Math.pow(1.02, yr));
+      } else {
+        const yearsInRetire = currentAge - retireAge;
+        salarySelf = Math.round(totalAutoPensionSelf * Math.pow(1.02, yearsInRetire));
+      }
+
+      let salarySpouse = 0;
+      if (isDoubleMode && currentAge >= marryAge) {
+        if (currentAge < retireAge) {
+          salarySpouse = Math.round(baseSalarySpouse * Math.pow(1.02, currentAge - marryAge));
+        } else {
+          const yearsInRetireSpouse = currentAge - retireAge;
+          salarySpouse = Math.round(totalAutoPensionSpouse * Math.pow(1.02, yearsInRetireSpouse));
+        }
+      }
+
+      let bonusSelf = 0;
+      if (currentAge < retireAge) {
+        const ageOffset = currentAge - startAge;
+        if (ageOffset < 3) {
+          const mB32 = parseFloat(document.getElementById('mBonus_32')?.value) || 5000;
+          const yB32 = parseFloat(document.getElementById('yBonus_32')?.value) || 35000;
+          const fB32 = parseFloat(document.getElementById('fBonus_32')?.value) || 6000;
+          bonusSelf = mB32 + ((yB32 + fB32) / 12);
+        } else if (currentAge < startAge + 10) {
+          const mB35 = parseFloat(document.getElementById('mBonus_35')?.value) || 5000;
+          const yMo35 = parseFloat(document.getElementById('yBonusMonth_35')?.value) || 1;
+          const fB35 = parseFloat(document.getElementById('fBonus_35')?.value) || 6000;
+          bonusSelf = mB35 + ((salarySelf * yMo35 + fB35) / 12);
+        } else if (currentAge < startAge + 20) {
+          const mB45 = parseFloat(document.getElementById('mBonus_45')?.value) || 5000;
+          const yMo45 = parseFloat(document.getElementById('yBonusMonth_45')?.value) || 1;
+          const fB45 = parseFloat(document.getElementById('fBonus_45')?.value) || 6000;
+          bonusSelf = mB45 + ((salarySelf * yMo45 + fB45) / 12);
+        } else {
+          const mB55 = parseFloat(document.getElementById('mBonus_55')?.value) || 0;
+          const yMo55 = parseFloat(document.getElementById('yBonusMonth_55')?.value) || 1;
+          const fB55 = parseFloat(document.getElementById('fBonus_55')?.value) || 6000;
+          bonusSelf = mB55 + ((salarySelf * yMo55 + fB55) / 12);
+        }
+      }
+
+      let childMonthlyExpense = 0;
+      if (childBirthAge > 0) {
+        const childAge = currentAge - childBirthAge;
+        if (childAge >= 0 && childAge < 22) {
+          const inflationFactor = Math.pow(1.03, yr);
+          if (childAge < 3) childMonthlyExpense = c1_m * inflationFactor;
+          else if (childAge < 6) childMonthlyExpense = c2_m * inflationFactor;
+          else if (childAge < 12) childMonthlyExpense = c3_m * inflationFactor;
+          else if (childAge < 18) childMonthlyExpense = c4_m * inflationFactor;
+          else if (childAge < 22) childMonthlyExpense = c5_m * inflationFactor;
+
+          if (childAge < 2 && maternityLeaveMode === 'half') {
+            salarySelf *= 0.5;
+          } else if (childAge < 2 && maternityLeaveMode === 'zero') {
+            salarySelf = 0;
+          }
+        }
+      }
+
+      const totalIncome = salarySelf + salarySpouse + Math.round(bonusSelf) + monthlyDiv;
+      
+      let monthlyHouse = monthlyRentInput;
+      if (isBuy) {
+        if (currentAge >= buyAge) {
+          monthlyHouse = (yr - (buyAge - startAge) < 5) ? normalMortgagePmt1 : normalMortgagePmt2;
+        }
+      } else {
+        monthlyHouse = Math.round(monthlyRentInput * Math.pow(1.03, yr));
+      }
+
+      const activeLivingBase = (isDoubleMode && currentAge >= marryAge) ? expMarriedLiving : expLiving;
+      const monthlyExpense = Math.round(activeLivingBase * Math.pow(1.03, yr)) + monthlyHouse + Math.round(childMonthlyExpense);
+      
+      const displayInvestActual = etfInvestMonthly;
+      const totalMonthlyInvest = displayInvestActual + extraBonusInvest;
+      const rawSurplus = totalIncome - monthlyExpense - totalMonthlyInvest;
+
+      if (rawSurplus >= 0) currentSavings = Math.round(currentSavings * 1.01 + (rawSurplus * 12));
+      else {
+        currentSavings += (rawSurplus * 12);
+        if (currentSavings < 0) currentSavings = 0;
+      }
+
+      const noInvestSurplus = (salarySelf + salarySpouse) - monthlyExpense;
+      if (noInvestSurplus >= 0) noInvestSavings = Math.round(noInvestSavings * 1.01 + (noInvestSurplus * 12));
+      else noInvestSavings += (noInvestSurplus * 12);
+
+      if (noInvestSavings <= 0 && noInvestBankruptcyAge === null) noInvestBankruptcyAge = currentAge;
+
+      const netWorth = currentStockValue + currentSavings;
+
+      if (ageList.includes(currentAge)) {
+        milestoneData[currentAge] = {
+          totalIncome: totalIncome,
+          salarySelf: salarySelf,
+          salarySpouse: salarySpouse,
+          dividend: monthlyDiv,
+          housing: monthlyHouse,
+          living: (monthlyExpense - monthlyHouse),
+          investActual: displayInvestActual,
+          extraInvest: extraBonusInvest,
+          rawSurplus: rawSurplus,
+          surplus: Math.max(0, rawSurplus),
+          stock: currentStockValue,
+          savings: currentSavings,
+          netWorth: netWorth
+        };
+        compareMilestone.investNet[currentAge] = netWorth;
+        compareMilestone.noInvestNet[currentAge] = Math.max(0, noInvestSavings);
+      }
+
+      annualLabels.push(`${currentAge}歲`);
+      annualTotalNet.push(netWorth);
+      annualNoInvestNet.push(Math.max(0, noInvestSavings));
+    }
+
+    const badgeDcaTotal = document.getElementById('badge_dca_total');
+    if (badgeDcaTotal) {
+      badgeDcaTotal.textContent = `目前首階段每月定期定額小計：NT$ ${formatMoney(totalMonthlyInvestSummary)} 元 (可分階段設定)`;
+    }
+
+    const tipEl = document.getElementById('downPaymentTip');
+    if (tipEl) {
+      if (isBuy) {
+        tipEl.innerHTML = buyWarningMessage + `<br>房貸：約 NT$ ${formatMoney(normalMortgagePmt1)}/月 (${mortgageYears}年期)。`;
+      } else {
+        tipEl.innerHTML = `<strong>居住策略：全程租屋</strong>，資金全數留存於台股 ETF 複利投資中。`;
+      }
+    }
+
+    const retData = milestoneData[retireAge] || milestoneData[50] || { rawSurplus: 0 };
+    const finalData = milestoneData[endAge] || { netWorth: 0, savings: 0, stock: 0 };
+    
+    const kpiSur = document.getElementById('kpiSurplus'); if (kpiSur) kpiSur.textContent = `+ NT$ ${formatMoney(retData.rawSurplus)}`;
+    const kpiNet = document.getElementById('kpiNetWorth'); if (kpiNet) kpiNet.textContent = `${(finalData.netWorth / 10000).toFixed(0)} 萬元`;
+    const kpiRatio = document.getElementById('kpiStockRatio'); if (kpiRatio) kpiRatio.textContent = `現金 ${(finalData.savings/10000).toFixed(0)}萬｜台股ETF ${(finalData.stock/10000).toFixed(0)}萬`;
+
+    const thRow = document.getElementById('tableHeaderRow');
+    if (thRow) thRow.innerHTML = `<th>項目</th>` + ageList.map(a => `<th>${a} 歲${a === retireAge ? ' (退休)' : ''}</th>`).join('');
+    
+    const tbBody = document.getElementById('resultTableBody');
+    if (tbBody) {
+      let spouseRowHtml = '';
+      if (isDoubleMode) {
+        spouseRowHtml = `<tr class="sub-row"><td> └ 另一半薪資/勞保+勞退年金</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.salarySpouse)}</td>`).join('')}</tr>`;
+      }
+
+      tbBody.innerHTML = `
+        <tr style="font-weight:700;"><td>月總收入 (合計)</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.totalIncome)}</td>`).join('')}</tr>
+        <tr class="sub-row"><td> ├ 本人薪資/勞保+勞退年金</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.salarySelf)}</td>`).join('')}</tr>
+        ${spouseRowHtml}
+        <tr class="sub-row"><td> └ 每月股票配息收入</td>${ageList.map(a => `<td style="color:var(--primary); font-weight:700;">${formatMoney(milestoneData[a]?.dividend)}</td>`).join('')}</tr>
+        <tr><td>每月居住支出</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.housing)}</td>`).join('')}</tr>
+        <tr><td>每月基礎與育兒開銷</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.living)}</td>`).join('')}</tr>
+        <tr><td>每月定期定額提撥</td>${ageList.map(a => `<td>${formatMoney(milestoneData[a]?.investActual)}</td>`).join('')}</tr>
+        <tr style="background:rgba(16, 185, 129, 0.1);"><td><strong>每月超額存款加碼投入</strong></td>${ageList.map(a => `<td><strong style="color:var(--primary)">${formatMoney(milestoneData[a]?.extraInvest)}</strong></td>`).join('')}</tr>
+        <tr style="background:rgba(239, 68, 68, 0.1);"><td><strong>① 每月原始收支結餘</strong></td>${ageList.map(a => `<td><strong style="color:${milestoneData[a]?.rawSurplus>=0?'var(--text)':'var(--danger)'}">${formatMoney(milestoneData[a]?.rawSurplus)}</strong></td>`).join('')}</tr>
+        <tr style="background:rgba(16, 185, 129, 0.15);"><td><strong>② 平帳後每月活存結餘</strong></td>${ageList.map(a => `<td><strong style="color:var(--primary)">${formatMoney(milestoneData[a]?.surplus)}</strong></td>`).join('')}</tr>
+        <tr><td><strong>台股 ETF 總市值</strong></td>${ageList.map(a => `<td><strong style="color:var(--primary)">${formatMoney(milestoneData[a]?.stock)}</strong></td>`).join('')}</tr>
+        <tr><td><strong>台幣現金/活存總額</strong></td>${ageList.map(a => `<td><span style="font-weight:700;">${formatMoney(milestoneData[a]?.savings)}</span></td>`).join('')}</tr>
+        <tr style="background:rgba(59, 130, 246, 0.15); font-weight:800;"><td><strong>🏆 個人總身家淨值</strong></td>${ageList.map(a => `<td><strong style="color:var(--secondary)">${formatMoney(milestoneData[a]?.netWorth)}</strong></td>`).join('')}</tr>
+      `;
+    }
+
+    const cmpTh = document.getElementById('compareHeaderRow');
+    if (cmpTh) cmpTh.innerHTML = `<th>情境方案</th>` + ageList.map(a => `<th>${a} 歲</th>`).join('');
+    
+    const cmpTb = document.getElementById('compareTableBody');
+    if (cmpTb) {
+      cmpTb.innerHTML = `
+        <tr style="background:rgba(16, 185, 129, 0.1); font-weight:700;"><td style="color:var(--primary)">方案 A：台股ETF積極投資身家</td>${ageList.map(a => `<td style="color:var(--primary)">${formatMoney(compareMilestone.investNet[a])}</td>`).join('')}</tr>
+        <tr style="background:rgba(239, 68, 68, 0.1); font-weight:700;"><td style="color:var(--danger)">方案 B：純放現金身家</td>${ageList.map(a => `<td style="color:${compareMilestone.noInvestNet[a]>=0?'var(--text)':'var(--danger)'}">${formatMoney(compareMilestone.noInvestNet[a])}</td>`).join('')}</tr>
+        <tr style="background:rgba(168, 85, 247, 0.1); font-weight:800;"><td style="color:var(--purple)">身家差距 (A - B)</td>${ageList.map(a => `<td style="color:var(--purple)">+ ${((compareMilestone.investNet[a]-compareMilestone.noInvestNet[a])/10000).toFixed(0)} 萬</td>`).join('')}</tr>
+      `;
+    }
+
+    const diffWan = ((compareMilestone.investNet[endAge] - Math.max(0, compareMilestone.noInvestNet[endAge])) / 10000).toFixed(0);
+    let bankMsg = noInvestBankruptcyAge ? `<br>🚨 <strong style="color:var(--danger);">不投資風險提醒：</strong>若純放現金，資金將在 <strong style="color:var(--danger); font-size:0.95rem;">${noInvestBankruptcyAge} 歲</strong> 耗盡！` : '';
+    const cmpTip = document.getElementById('compareSummaryTip');
+    if (cmpTip) {
+      cmpTip.innerHTML = `<strong>💡 投資結論：</strong>85 歲時透過台股 ETF 定期定額複利，總身家比純放現金多出約 <strong>NT$ ${formatMoney(diffWan)} 萬元</strong>。${bankMsg}`;
+    }
+
+    updateLineChart(annualLabels, annualTotalNet, annualNoInvestNet);
+  }
+
+  function updateLineChart(labels, investData, noInvestData) {
+    const chartEl = document.getElementById('assetChart');
+    if (!chartEl) return;
+    const ctx = chartEl.getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: '台股ETF積極投資總身家', data: investData, borderColor: '#10b981', borderWidth: 3.5, fill: false, tension: 0.25, pointRadius: 2 },
+          { label: '純放現金', data: noInvestData, borderColor: '#ef4444', borderWidth: 2.5, borderDash: [5, 5], fill: false, tension: 0.25, pointRadius: 2 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: 'var(--border)' }, ticks: { color: 'var(--text-muted)', maxTicksLimit: 12 } },
+          y: { grid: { color: 'var(--border)' }, ticks: { color: 'var(--text-muted)', callback: v => `${(v/10000).toFixed(0)}萬` } }
+        },
+        plugins: { legend: { labels: { color: 'var(--text)' }, position: 'bottom' } }
+      }
+    });
+  }
+
+  function resetFormData() {
+    if (confirm('確定要清除所有自訂修改，恢復為預設設定嗎？')) {
+      localStorage.removeItem('financial_sim_universal_theme');
+      location.reload();
+    }
+  }
+
+  window.onload = () => {
+    initTheme();
+    initSectionsVisibility();
+    renderDynamicLists();
+    calculate();
+  };
+</script>
+</body>
+</html>
