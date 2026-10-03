@@ -567,7 +567,7 @@
 
       <!-- 每月台股 ETF 定期定額設定 -->
       <div class="section-subtitle">
-        <span>📈 每月台股 ETF 定期定額 (每 5 年區間設定)</span>
+        <span>📈 每月台股 ETF 定期定額 (每 10 年區間設定)</span>
         <select id="enableDca" onchange="toggleSection('dcaSection', this.value); calculate();" style="width:110px; padding:3px 6px; font-size:0.75rem; font-weight:700;">
           <option value="enabled" selected>🟢 啟用投資</option>
           <option value="disabled">🔴 暫停關閉</option>
@@ -575,7 +575,7 @@
       </div>
       <div class="stage-box" id="dcaSection">
         <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">
-          💡 依據您規劃的起始年齡與退休年齡，系統自動產生 5 年一期的定期定額投入金額設定：
+          💡 依據您規劃的起始年齡與退休年齡，系統自動產生 10 年一期的定期定額投入金額設定：
         </div>
         <div class="dynamic-list" id="dcaIntervalContainer"></div>
         
@@ -817,37 +817,33 @@
   ];
 
   let dcaIntervals = [
-    { range: '25-29歲', start: 25, end: 29, v0050: 6000, v00919: 3000 },
-    { range: '30-34歲', start: 30, end: 34, v0050: 6000, v00919: 3000 },
-    { range: '35-39歲', start: 35, end: 39, v0050: 6000, v00919: 3000 },
-    { range: '40-44歲', start: 40, end: 44, v0050: 6000, v00919: 3000 },
-    { range: '45-49歲', start: 45, end: 49, v0050: 6000, v00919: 3000 },
-    { range: '50-54歲', start: 50, end: 54, v0050: 6000, v00919: 3000 },
-    { range: '55-59歲', start: 55, end: 59, v0050: 6000, v00919: 3000 },
-    { range: '60-64歲', start: 60, end: 64, v0050: 6000, v00919: 3000 }
-  ];
+  { range: '25-34歲', start: 25, end: 34, v0050: 6000, v00919: 3000 },
+  { range: '35-44歲', start: 35, end: 44, v0050: 6000, v00919: 3000 },
+  { range: '45-54歲', start: 45, end: 54, v0050: 6000, v00919: 3000 },
+  { range: '55-64歲', start: 55, end: 64, v0050: 6000, v00919: 3000 },
+];
 
-  function updateDcaIntervals() {
-    const startAge = parseInt(document.getElementById('startAge')?.value || 25, 10);
-    const retireAge = parseInt(document.getElementById('retireAge')?.value || 65, 10);
-    
-    let newIntervals = [];
-    let cur = startAge;
-    while(cur < retireAge) {
-      let nextCur = Math.min(retireAge, cur + 5);
-      let existing = dcaIntervals.find(d => d.start === cur);
-      newIntervals.push({
-        range: `${cur}-${nextCur-1}歲`,
-        start: cur,
-        end: nextCur - 1,
-        v0050: existing ? existing.v0050 : 6000,
-        v00919: existing ? existing.v00919 : 3000
-      });
-      cur = nextCur;
-    }
-    dcaIntervals = newIntervals;
-    renderDcaIntervalsContainer();
+function updateDcaIntervals() {
+  const startAge = parseInt(document.getElementById('startAge')?.value || 25, 10);
+  const retireAge = parseInt(document.getElementById('retireAge')?.value || 65, 10);
+
+  let newIntervals = [];
+  let cur = startAge;
+  while(cur < retireAge) {
+    let nextCur = Math.min(retireAge, cur + 10);
+    let existing = dcaIntervals.find(d => d.start === cur);
+    newIntervals.push({
+      range: `${cur}-${nextCur-1}歲`,
+      start: cur,
+      end: nextCur - 1,
+      v0050: existing ? existing.v0050 : 6000,
+      v00919: existing ? existing.v00919 : 3000
+    });
+    cur = nextCur;
   }
+  dcaIntervals = newIntervals;
+  renderDcaIntervalsContainer();
+}
 
   let defaultStocks = [
     { id: '0050', name: '元大台灣50', shares: 0, price: 110.0, yield: 3.5, freq: 'quarter', historyDivs: [1.2, 1.1, 1.0, 0.9] },
